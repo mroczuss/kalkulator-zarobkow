@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Zarobkowy Uber & Bolt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Biblioteka html2pdf.js do generowania PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #090d16;
+            --card-bg: rgba(19, 26, 42, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-uber: #38bdf8;
+            --accent-bolt: #34d399;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --input-bg: rgba(10, 15, 26, 0.8);
+            --radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(52, 211, 153, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.12) 0%, transparent 45%);
+            min-height: 100vh;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 840px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 2.3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 20%, #9ca3af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* SEKCJA DANYCH OGÓLNYCH */
+        .info-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 22px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-header .badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .uber-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .bolt-badge {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-bolt);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.15);
+        }
+
+        .card-header h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--accent-bolt);
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
+        }
+
+        .input-wrapper input.auto-calculated {
+            background: rgba(52, 211, 153, 0.08);
+            border-color: rgba(52, 211, 153, 0.25);
+            color: #34d399;
+            font-weight: 700;
+        }
+
+        /* Ukrycie strzałek w polach type=number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .btn-calc {
+            width: 100%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 18px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .btn-calc:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-calc:active {
+            transform: translateY(0);
+        }
+
+        .results-container {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 22px 16px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+        }
+
+        .result-card.highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(6, 78, 59, 0.25) 100%);
+            border-color: rgba(52, 211, 153, 0.4);
+            box-shadow: 0 10px 25px rgba(52, 211, 153, 0.15);
+        }
+
+        .result-title {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .result-card.highlight .result-value {
+            color: #34d399;
+        }
+
+        .result-card.transfer .result-value {
+            color: #38bdf8;
+        }
+
+        .result-card.negative .result-value {
+            color: #f87171;
+        }
+
+        .btn-pdf {
+            width: 100%;
+            background: rgba(56, 189, 248, 0.12);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-pdf:hover {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* STYL DLA ZAPISU RAPORTU PDF (UKRYTY NA STRONIE) */
+        #pdf-template {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #pdf-template, #pdf-template * {
+                visibility: visible;
+            }
+            #pdf-template {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Kalkulator Zarobkowy</h1>
+            <p>Rozliczenie Kierowcy Uber & Bolt</p>
+        </div>
+
+        <!-- SEKCJA OKRESU I KIEROWCY -->
+        <div class="info-card">
+            <div class="info-grid">
+                <div class="input-group">
+                    <label for="period-text">Okres rozliczenia</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="period-text" value="07.09-13.09" placeholder="np. 07.09-13.09" oninput="updateWeekAndYear(this.value)">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="week-year-display">Numer tygodnia i rok (automatycznie)</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="week-year-display" class="auto-calculated" readonly value="-">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="driver-name">Imię i Nazwisko kierowcy</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="driver-name" placeholder="Jan Kowalski">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- UBER CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="badge uber-badge">U</div>
+                    <h2>UBER</h2>
+                </div>
+                <div class="input-group">
+                    <label for="uberz">Zarobki (zł)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="uberz" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="uberg">Gotówka (zł)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="uberg" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="uberk">Ilość kursów</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="uberk" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOLT CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="badge bolt-badge">B</div>
+                    <h2>BOLT</h2>
+                </div>
+                <div class="input-group">
+                    <label for="boltz">Zarobki (zł)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="boltz" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="boltg">Gotówka (zł)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="boltg" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="boltk">Ilość kursów</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="boltk" placeholder="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-calc" onclick="liczenie()">⚡ Przelicz Rozliczenie</button>
+
+        <div class="results-container" id="results">
+            <div class="results-grid">
+                <div class="result-card highlight">
+                    <div class="result-title">Na czysto</div>
+                    <div class="result-value" id="res-naczysto">0.00 zł</div>
+                </div>
+                <div class="result-card transfer" id="transfer-card">
+                    <div class="result-title">Do przelewu</div>
+                    <div class="result-value" id="res-doprzelewu">0.00 zł</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">Gotówka razem</div>
+                    <div class="result-value" id="res-allgotowka">0.00 zł</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-title">Procent</div>
+                    <div class="result-value" id="res-procent">0%</div>
+                </div>
+            </div>
+
+            <button class="btn-pdf" onclick="generatePDF()">📄 Pobierz Raport PDF</button>
+        </div>
+    </div>
+
+    <!-- SZABLON WYNIKOWEGO DOKUMENTU PDF -->
+    <div id="pdf-template">
+        <div id="pdf-content" style="padding: 30px; font-family: Arial, sans-serif; color: #111827; background: #ffffff; max-width: 750px; margin: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+            
+            <!-- NAGŁÓWEK RAPORTU -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 20px;">
+                <div>
+                    <h1 style="font-size: 22px; font-weight: bold; color: #065f46; margin: 0;">RAPORT ROZLICZENIOWY KIEROWCY</h1>
+                    <p style="font-size: 13px; color: #6b7280; margin-top: 4px;">Uber & Bolt — Rozliczenie Tygodniowe</p>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 12px; color: #9ca3af;">Data wygenerowania:</span><br>
+                    <strong style="font-size: 13px;" id="pdf-gen-date">14.09.2026</strong>
+                </div>
+            </div>
+
+            <!-- DANE OGÓLNE -->
+            <div style="display: flex; justify-content: space-between; background: #f9fafb; padding: 14px 18px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #f3f4f6;">
+                <div>
+                    <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Kierowca</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #111827;" id="pdf-driver-val">-</div>
+                </div>
+                <div>
+                    <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Okres rozliczenia</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #059669;" id="pdf-period-val">-</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Tydzień i Rok</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #3b82f6;" id="pdf-weekyear-val">-</div>
+                </div>
+            </div>
+
+            <!-- TABELA APLIKACJI -->
+            <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 10px;">1. Podsumowanie Przejazdów</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f3f4f6; color: #4b5563; text-align: left;">
+                        <th style="padding: 10px; border: 1px solid #e5e7eb;">Aplikacja</th>
+                        <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;">Ilość kursów</th>
+                        <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">Pobrana gotówka</th>
+                        <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">Zarobki (Utarg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">UBER</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;" id="pdf-uberk">0</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-uberg">0,00 zł</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-uberz">0,00 zł</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">BOLT</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;" id="pdf-boltk">0</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-boltg">0,00 zł</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-boltz">0,00 zł</td>
+                    </tr>
+                    <tr style="background: #fdfdfd; font-weight: bold;">
+                        <td style="padding: 10px; border: 1px solid #e5e7eb;">RAZEM</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;" id="pdf-allkursy">0</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-allgotowka-tab">0,00 zł</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-allzarobki">0,00 zł</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- WYLICZENIA FINANSE -->
+            <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 10px;">2. Rozliczenie Finansowe</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px;">
+                    <span>Próg prowizyjny (wg liczby kursów):</span>
+                    <strong id="pdf-procent-val">0%</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px;">
+                    <span>Utarg po prowizji:</span>
+                    <span id="pdf-utarg-val">0,00 zł</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px; color: #dc2626;">
+                    <span>Podatki i opłaty (1% + 29 zł):</span>
+                    <span id="pdf-podatki-val">-0,00 zł</span>
+                </div>
+            </div>
+
+            <!-- GŁÓWNE PODSUMOWANIE -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #047857; font-weight: bold;">Na czysto</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #065f46; margin-top: 4px;" id="pdf-naczysto">0,00 zł</div>
+                </div>
+
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #1d4ed8; font-weight: bold;">Do przelewu</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #1e40af; margin-top: 4px;" id="pdf-doprzelewu">0,00 zł</div>
+                </div>
+
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #4b5563; font-weight: bold;">Gotówka razem</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #111827; margin-top: 4px;" id="pdf-allgotowka">0,00 zł</div>
+                </div>
+
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #4b5563; font-weight: bold;">Procent</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #111827; margin-top: 4px;" id="pdf-procent">0%</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 12px;">
+                Dokument wygenerowany automatycznie z Kalkulatora Zarobkowego Uber/Bolt.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatPLN(amount) {
+            return amount.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+        }
+
+        // Automatyczne wyliczanie numeru tygodnia i roku z wpisanego tekstu (np. "07.09-13.09" lub "07.09.2026 - 13.09.2026")
+        function updateWeekAndYear(str) {
+            const displayElem = document.getElementById("week-year-display");
+            if (!str || !str.trim()) {
+                displayElem.value = "-";
+                return;
+            }
+
+            // Szuka pierwszej daty w formacie DD.MM lub DD.MM.YYYY lub DD/MM
+            const match = str.match(/(\d{1,2})[\.\/](\d{1,2})(?:[\.\/](\d{2,4}))?/);
+            if (match) {
+                const day = parseInt(match[1], 10);
+                const month = parseInt(match[2], 10) - 1; // 0-indexed
+                let year = match[3] ? parseInt(match[3], 10) : new Date().getFullYear();
+                if (year < 100) year += 2000;
+
+                const d = new Date(Date.UTC(year, month, day));
+                if (!isNaN(d.getTime())) {
+                    // Wyliczenie tygodnia ISO
+                    const dayNum = d.getUTCDay() || 7;
+                    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                    const weekYear = d.getUTCFullYear();
+
+                    displayElem.value = `Tydzień ${weekNo} / ${weekYear}`;
+                    return;
+                }
+            }
+            displayElem.value = "-";
+        }
+
+        // Automatyczne wywołanie po załadowaniu strony
+        window.addEventListener('DOMContentLoaded', () => {
+            const initialPeriod = document.getElementById("period-text").value;
+            updateWeekAndYear(initialPeriod);
+        });
+
+        // Przechowywanie bieżących wyliczeń
+        let currentData = {};
+
+        function liczenie() {
+            const kursyb = Number(document.getElementById("boltk").value) || 0;
+            const kursyu = Number(document.getElementById("uberk").value) || 0;
+            const allkursy = kursyb + kursyu;
+
+            const zarobkib = Number(document.getElementById("boltz").value) || 0;
+            const zarobkiu = Number(document.getElementById("uberz").value) || 0;
+            const allzarobki = zarobkib + zarobkiu;
+
+            const gotowkab = Number(document.getElementById("boltg").value) || 0;
+            const gotowkau = Number(document.getElementById("uberg").value) || 0;
+            const allgotowka = gotowkab + gotowkau;
+
+            let procent = 0;
+            if (allkursy <= 69) {
+                procent = 0.60;
+            } else if (allkursy >= 70 && allkursy <= 109) {
+                procent = 0.62;
+            } else if (allkursy >= 110 && allkursy <= 149) {
+                procent = 0.64;
+            } else if (allkursy >= 150 && allkursy <= 175) {
+                procent = 0.66;
+            } else if (allkursy >= 176 && allkursy <= 199) {
+                procent = 0.68;
+            } else if (allkursy >= 200 && allkursy <= 229) {
+                procent = 0.70;
+            } else if (allkursy >= 230 && allkursy <= 250) {
+                procent = 0.72;
+            } else if (allkursy >= 251) {
+                procent = 0.75;
+            }
+
+            let utarg = allzarobki * procent;
+            let podatki = (utarg * 0.01) + 29;
+            let naczysto = utarg - podatki;
+            let doprzelewu = naczysto - allgotowka;
+
+            currentData = {
+                kursyb, kursyu, allkursy,
+                zarobkib, zarobkiu, allzarobki,
+                gotowkab, gotowkau, allgotowka,
+                procent, utarg, podatki, naczysto, doprzelewu
+            };
+
+            // Wypisanie na ekranie: naczysto, doprzelewu, allgotowka, procent
+            document.getElementById("res-naczysto").innerText = formatPLN(naczysto);
+            document.getElementById("res-doprzelewu").innerText = formatPLN(doprzelewu);
+            document.getElementById("res-allgotowka").innerText = formatPLN(allgotowka);
+            document.getElementById("res-procent").innerText = Math.round(procent * 100) + '%';
+
+            const transferCard = document.getElementById("transfer-card");
+            if (doprzelewu < 0) {
+                transferCard.classList.add("negative");
+                transferCard.classList.remove("transfer");
+            } else {
+                transferCard.classList.add("transfer");
+                transferCard.classList.remove("negative");
+            }
+
+            document.getElementById("results").style.display = "block";
+        }
+
+        function generatePDF() {
+            if (!currentData.allzarobki && currentData.allzarobki !== 0) {
+                liczenie();
+            }
+
+            const driverName = document.getElementById("driver-name").value.trim() || "Kierowca";
+            const periodText = document.getElementById("period-text").value.trim() || "07.09-13.09";
+            const weekYearText = document.getElementById("week-year-display").value || "-";
+            const todayStr = new Date().toLocaleDateString('pl-PL');
+
+            // Aktualizacja szablonu PDF
+            document.getElementById("pdf-gen-date").innerText = todayStr;
+            document.getElementById("pdf-driver-val").innerText = driverName;
+            document.getElementById("pdf-period-val").innerText = periodText;
+            document.getElementById("pdf-weekyear-val").innerText = weekYearText;
+
+            // Tabela przejazdów
+            document.getElementById("pdf-uberk").innerText = currentData.kursyu;
+            document.getElementById("pdf-uberg").innerText = formatPLN(currentData.gotowkau);
+            document.getElementById("pdf-uberz").innerText = formatPLN(currentData.zarobkiu);
+
+            document.getElementById("pdf-boltk").innerText = currentData.kursyb;
+            document.getElementById("pdf-boltg").innerText = formatPLN(currentData.gotowkab);
+            document.getElementById("pdf-boltz").innerText = formatPLN(currentData.zarobkib);
+
+            document.getElementById("pdf-allkursy").innerText = currentData.allkursy;
+            document.getElementById("pdf-allgotowka-tab").innerText = formatPLN(currentData.allgotowka);
+            document.getElementById("pdf-allzarobki").innerText = formatPLN(currentData.allzarobki);
+
+            // Wyliczenia
+            document.getElementById("pdf-procent-val").innerText = Math.round(currentData.procent * 100) + '%';
+            document.getElementById("pdf-utarg-val").innerText = formatPLN(currentData.utarg);
+            document.getElementById("pdf-podatki-val").innerText = '-' + formatPLN(currentData.podatki);
+
+            // Podsumowanie główne
+            document.getElementById("pdf-naczysto").innerText = formatPLN(currentData.naczysto);
+            document.getElementById("pdf-doprzelewu").innerText = formatPLN(currentData.doprzelewu);
+            document.getElementById("pdf-allgotowka").innerText = formatPLN(currentData.allgotowka);
+            document.getElementById("pdf-procent").innerText = Math.round(currentData.procent * 100) + '%';
+
+            const element = document.getElementById("pdf-content");
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Rozliczenie_${driverName.replace(/\s+/g, '_')}_${periodText.replace(/\s+/g, '')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            if (typeof html2pdf !== 'undefined') {
+                html2pdf().set(opt).from(element).save();
+            } else {
+                window.print();
+            }
+        }
+    </script>
+</body>
+
+</html>

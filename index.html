@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikacja Rozliczeniowa Uber & Bolt</title>
+    <!-- Fonty i style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Biblioteki html2pdf.js, Chart.js oraz Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+    <div id="app-container">
+
+        <!-- ================= EKRAN LOGOWANIA ================= -->
+        <div id="screen-login" class="login-screen">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>Portal Kierowcy</h1>
+                    <p>Rozliczenia Uber & Bolt</p>
+                </div>
+
+                <div class="role-selector">
+                    <button type="button" id="role-btn-driver" class="role-btn active" onclick="selectRoleTab('driver')">👨‍✈️ Kierowca</button>
+                    <button type="button" id="role-btn-admin" class="role-btn" onclick="selectRoleTab('admin')">⚙️ Admin</button>
+                </div>
+
+                <!-- <div class="demo-credentials" id="demo-credentials-box">
+                    Konto testowe Kierowcy: <strong>kierowca</strong> / hasło: <strong>123</strong>
+                </div> -->
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label for="login-username">Login / Nazwa użytkownika</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="login-username" placeholder="Wpisz login..." required autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Hasło</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="login-password" placeholder="Wpisz hasło..." required autocomplete="current-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-calc" style="margin-top: 24px; margin-bottom: 0;">Zaloguj się</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ================= GŁÓWNA APLIKACJA ================= -->
+        <div id="screen-main" style="display: none;">
+            
+            <!-- PASEK NAWIGACJI -->
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <div class="logo-icon">⚡</div>
+                    <div class="logo-text">Uber/Bolt Rozliczenia</div>
+                </div>
+
+                <div class="nav-tabs">
+                    <button type="button" id="nav-btn-calc" class="tab-btn active" onclick="switchTab('calc')">⚡ Kalkulator</button>
+                    <button type="button" id="nav-btn-charts" class="tab-btn" onclick="switchTab('charts')">📊 Wykresy & Statystyki</button>
+                    <button type="button" id="nav-btn-history" class="tab-btn" onclick="switchTab('history')">📜 Historia Tygodni</button>
+                    <button type="button" id="nav-btn-admin" class="tab-btn" style="display: none;" onclick="switchTab('admin')">⚙️ Panel Admina</button>
+                </div>
+
+                <div class="nav-user">
+                    <div class="user-badge">
+                        <div class="user-avatar" id="nav-user-avatar">K</div>
+                        <div class="user-name" id="nav-user-name">Kierowca</div>
+                    </div>
+                    <button type="button" class="btn-logout" onclick="handleLogout()">Wyloguj</button>
+                </div>
+            </nav>
+
+            <main class="main-content">
+                
+                <!-- ZAKŁADKA 1: KALKULATOR -->
+                <div id="tab-calc" class="tab-content active">
+                    <div class="info-card">
+                        <div class="info-grid">
+                            <div class="input-group">
+                                <label for="period-text">Okres rozliczenia</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="period-text" value="07.09-13.09" placeholder="np. 07.09-13.09" oninput="updateWeekAndYear(this.value)">
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="week-year-display">Numer tygodnia i rok (automatycznie)</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="week-year-display" class="auto-calculated" readonly value="-">
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="driver-name">Imię i Nazwisko kierowcy</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="driver-name" placeholder="Jan Kowalski">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-cards">
+                        <!-- UBER CARD -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="badge uber-badge">U</div>
+                                <h2>UBER</h2>
+                            </div>
+                            <div class="input-group">
+                                <label for="uberz">Zarobki (zł)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="uberz" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="uberg">Gotówka (zł)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="uberg" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="uberk">Ilość kursów</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="uberk" placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOLT CARD -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="badge bolt-badge">B</div>
+                                <h2>BOLT</h2>
+                            </div>
+                            <div class="input-group">
+                                <label for="boltz">Zarobki (zł)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="boltz" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="boltg">Gotówka (zł)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="boltg" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="boltk">Ilość kursów</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="boltk" placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-calc" onclick="calculateSettlement()">⚡ Przelicz Rozliczenie</button>
+
+                    <div class="results-container" id="results" style="display: none; margin-top: 24px;">
+                        <div class="results-grid">
+                            <div class="result-card highlight">
+                                <div class="result-title">Na czysto</div>
+                                <div class="result-value" id="res-naczysto">0.00 zł</div>
+                            </div>
+                            <div class="result-card transfer" id="transfer-card">
+                                <div class="result-title">Do przelewu</div>
+                                <div class="result-value" id="res-doprzelewu">0.00 zł</div>
+                            </div>
+                            <div class="result-card">
+                                <div class="result-title">Gotówka razem</div>
+                                <div class="result-value" id="res-allgotowka">0.00 zł</div>
+                            </div>
+                            <div class="result-card">
+                                <div class="result-title">Procent</div>
+                                <div class="result-value" id="res-procent">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button class="btn-save" onclick="saveCurrentSettlement()">
+                                <span id="btn-save-text">💾 Zapisz w historii</span>
+                            </button>
+                            <button class="btn-pdf" onclick="generatePDF()">📄 Pobierz Raport PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZAKŁADKA 2: WYKRESY & STATYSTYKI -->
+                <div id="tab-charts" class="tab-content">
+                    <div class="stats-summary">
+                        <div class="stat-box">
+                            <div class="title">Suma Zarobków Netto</div>
+                            <div class="val" id="stat-total-naczysto">0.00 zł</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="title">Liczba Kursów</div>
+                            <div class="val" id="stat-total-trips">0 kursów</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="title">Średnia Tygodniowa</div>
+                            <div class="val" id="stat-avg-weekly">0.00 zł</div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>📊 Słupki Przychodów „Na czysto” (Tygodnie)</h3>
+                            <div class="chart-container">
+                                <canvas id="incomeChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>🚕 Porównanie Przychodu: Uber vs Bolt</h3>
+                            <div class="chart-container">
+                                <canvas id="appComparisonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZAKŁADKA 3: HISTORIA ROZLICZEŃ -->
+                <div id="tab-history" class="tab-content">
+                    <div class="table-card">
+                        <h3 style="margin-bottom: 20px;">📜 Zapisane Rozliczenia Tygodniowe</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Okres / Tydzień</th>
+                                    <th>Kierowca</th>
+                                    <th>Prowizja (%)</th>
+                                    <th>Na czysto</th>
+                                    <th>Do przelewu</th>
+                                    <th>Gotówka</th>
+                                    <th>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Renderowane z JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ZAKŁADKA 4: PANEL ADMINISTATORA -->
+                <div id="tab-admin" class="tab-content">
+                    <div class="admin-section">
+                        <h3>⚙️ Konfiguracja Opłat i Podatków</h3>
+                        <div class="info-card">
+                            <form onsubmit="saveAdminTaxSettings(event)" style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                                <div class="input-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                                    <label for="admin-fixed-fee">Opłata stała księgowa (zł)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="admin-fixed-fee" step="0.01" value="29">
+                                    </div>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                                    <label for="admin-tax-pct">Stawka podatkowa (%)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="admin-tax-pct" step="0.1" value="1">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-add">Zapisz stawki</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>📈 Progi Prowizyjne (Liczba kursów -> %)</h3>
+                        <div class="info-card" style="margin-bottom: 16px;">
+                            <form onsubmit="addAdminTier(event)" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+                                <div class="input-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                    <label for="tier-min">Min kursów</label>
+                                    <div class="input-wrapper"><input type="number" id="tier-min" required placeholder="0"></div>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                    <label for="tier-max">Max kursów</label>
+                                    <div class="input-wrapper"><input type="number" id="tier-max" required placeholder="69"></div>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                    <label for="tier-pct">Procent (%)</label>
+                                    <div class="input-wrapper"><input type="number" id="tier-pct" step="0.1" required placeholder="60"></div>
+                                </div>
+                                <button type="submit" class="btn-add">➕ Dodaj próg</button>
+                            </form>
+                        </div>
+
+                        <div class="table-card">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Zakres kursów</th>
+                                        <th>Prowizja (%)</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-tiers-body">
+                                    <!-- Renderowane z JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>👥 Zarządzanie Kontami Kierowców</h3>
+                        <div class="info-card" style="margin-bottom: 16px;">
+                            <form onsubmit="addAdminUser(event)" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+                                <div class="input-group" style="flex: 1; min-width: 160px; margin-bottom: 0;">
+                                    <label for="new-user-name">Imię i Nazwisko</label>
+                                    <div class="input-wrapper"><input type="text" id="new-user-name" required placeholder="np. Adam Nowak"></div>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                    <label for="new-user-username">Login</label>
+                                    <div class="input-wrapper"><input type="text" id="new-user-username" required placeholder="login"></div>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                    <label for="new-user-pass">Hasło</label>
+                                    <div class="input-wrapper"><input type="text" id="new-user-pass" required placeholder="hasło"></div>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px; margin-bottom: 0;">
+                                    <label for="new-user-role">Rola</label>
+                                    <div class="input-wrapper">
+                                        <select id="new-user-role">
+                                            <option value="driver">Kierowca</option>
+                                            <option value="admin">Administrator</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-add">➕ Dodaj użytkownika</button>
+                            </form>
+                        </div>
+
+                        <div class="table-card">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Imię i Nazwisko</th>
+                                        <th>Login</th>
+                                        <th>Rola</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-body">
+                                    <!-- Renderowane z JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- SZABLON WYNIKOWEGO DOKUMENTU PDF -->
+    <div id="pdf-template">
+        <div id="pdf-content" style="padding: 30px; font-family: Arial, sans-serif; color: #111827; background: #ffffff; max-width: 750px; margin: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 20px;">
+                <div>
+                    <h1 style="font-size: 22px; font-weight: bold; color: #065f46; margin: 0;">RAPORT ROZLICZENIOWY KIEROWCY</h1>
+                    <p style="font-size: 13px; color: #6b7280; margin-top: 4px;">Uber & Bolt — Rozliczenie Tygodniowe</p>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 12px; color: #9ca3af;">Data wygenerowania:</span><br>
+                    <strong style="font-size: 13px;" id="pdf-gen-date">14.09.2026</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; background: #f9fafb; padding: 14px 18px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #f3f4f6;">
+                <div>
+                    <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Kierowca</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #111827;" id="pdf-driver-val">-</div>
+                </div>
+                <div>
+                    <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Okres rozliczenia</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #059669;" id="pdf-period-val">-</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: bold;">Tydzień i Rok</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #3b82f6;" id="pdf-weekyear-val">-</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 10px;">1. Podsumowanie Przejazdów</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f3f4f6; color: #4b5563; text-align: left;">
+                        <th style="padding: 10px; border: 1px solid #e5e7eb;">Aplikacja</th>
+                        <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;">Ilość kursów</th>
+                        <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">Pobrana gotówka</th>
+                        <th style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;">Zarobki (Utarg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">UBER</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;" id="pdf-uberk">0</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-uberg">0,00 zł</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-uberz">0,00 zł</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold;">BOLT</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;" id="pdf-boltk">0</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-boltg">0,00 zł</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-boltz">0,00 zł</td>
+                    </tr>
+                    <tr style="background: #fdfdfd; font-weight: bold;">
+                        <td style="padding: 10px; border: 1px solid #e5e7eb;">RAZEM</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center;" id="pdf-allkursy">0</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-allgotowka-tab">0,00 zł</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: right;" id="pdf-allzarobki">0,00 zł</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="font-size: 14px; font-weight: bold; text-transform: uppercase; color: #374151; margin-bottom: 10px;">2. Rozliczenie Finansowe</h3>
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px;">
+                    <span>Próg prowizyjny (wg liczby kursów):</span>
+                    <strong id="pdf-procent-val">0%</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px;">
+                    <span>Utarg po prowizji:</span>
+                    <span id="pdf-utarg-val">0,00 zł</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px; color: #dc2626;">
+                    <span>Podatki i opłaty:</span>
+                    <span id="pdf-podatki-val">-0,00 zł</span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #047857; font-weight: bold;">Na czysto</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #065f46; margin-top: 4px;" id="pdf-naczysto">0,00 zł</div>
+                </div>
+
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #1d4ed8; font-weight: bold;">Do przelewu</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #1e40af; margin-top: 4px;" id="pdf-doprzelewu">0,00 zł</div>
+                </div>
+
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #4b5563; font-weight: bold;">Gotówka razem</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #111827; margin-top: 4px;" id="pdf-allgotowka">0,00 zł</div>
+                </div>
+
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; color: #4b5563; font-weight: bold;">Procent</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #111827; margin-top: 4px;" id="pdf-procent">0%</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #f3f4f6; padding-top: 12px;">
+                Dokument wygenerowany automatycznie z Aplikacji Rozliczeniowej Uber/Bolt.
+            </div>
+        </div>
+    </div>
+
+    <!-- Skrypty aplikacji -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

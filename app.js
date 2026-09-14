@@ -249,12 +249,16 @@ async function calculateSettlement() {
     let naczysto = utarg - podatki;
     let doprzelewu = naczysto - allgotowka;
 
+    const fuelElem = document.getElementById("fuel-amount");
+    const paliwo = fuelElem ? (Number(fuelElem.value) || 0) : 0;
+
     const user = getCurrentUser();
 
     currentCalculation = {
         period: document.getElementById("period-text").value.trim() || "07.09-13.09",
         weekYear: document.getElementById("week-year-display").value || "Tydzień 37 / 2026",
         driverName: document.getElementById("driver-name").value.trim() || (user ? user.name : "Kierowca"),
+        paliwo,
         uber: { zarobki: zarobkiu, gotowka: gotowkau, kursy: kursyu },
         bolt: { zarobki: zarobkib, gotowka: gotowkab, kursy: kursyb },
         total: { zarobki: allzarobki, gotowka: allgotowka, kursy: allkursy },
@@ -375,7 +379,7 @@ async function renderHistoryTable() {
             <td><span class="badge-tag">${Math.round(s.procent * 100)}%</span> (${s.total.kursy} kursów)</td>
             <td style="color:#34d399; font-weight:bold;">${formatPLN(s.naczysto)}</td>
             <td style="${s.doprzelewu < 0 ? 'color:#f87171;' : 'color:#38bdf8;'} font-weight:bold;">${formatPLN(s.doprzelewu)}</td>
-            <td>${formatPLN(s.total.gotowka)}</td>
+            <td>${formatPLN(s.total.gotowka)}${s.paliwo ? `<br><span style="font-size:0.78rem; color:#9ca3af;">⛽ Paliwo: ${formatPLN(s.paliwo)}</span>` : ''}</td>
             <td>
                 <button class="btn-icon" title="Edytuj" onclick="editSettlement('${s.id}')">✏️</button>
                 <button class="btn-icon" title="Pobierz PDF" onclick="generatePDFFromId('${s.id}')">📄</button>
@@ -393,6 +397,8 @@ async function editSettlement(id) {
     document.getElementById("period-text").value = found.period;
     updateWeekAndYear(found.period);
     document.getElementById("driver-name").value = found.driverName;
+    const fuelInp = document.getElementById("fuel-amount");
+    if (fuelInp) fuelInp.value = (found.paliwo && found.paliwo > 0) ? found.paliwo : "";
 
     document.getElementById("uberz").value = found.uber.zarobki;
     document.getElementById("uberg").value = found.uber.gotowka;
@@ -707,6 +713,9 @@ function generatePDF() {
     document.getElementById("pdf-procent-val").innerText = Math.round(data.procent * 100) + '%';
     document.getElementById("pdf-utarg-val").innerText = formatPLN(data.utarg);
     document.getElementById("pdf-podatki-val").innerText = '-' + formatPLN(data.podatki);
+    if (document.getElementById("pdf-paliwo-val")) {
+        document.getElementById("pdf-paliwo-val").innerText = formatPLN(data.paliwo || 0);
+    }
 
     document.getElementById("pdf-naczysto").innerText = formatPLN(data.naczysto);
     document.getElementById("pdf-doprzelewu").innerText = formatPLN(data.doprzelewu);

@@ -22,7 +22,7 @@
 
     <div id="app-container">
 
-        <!-- ================= EKRAN LOGOWANIA ================= -->
+        <!-- ================= EKRAN LOGOWANIA / REJESTRACJI ================= -->
         <div id="screen-login" class="login-screen">
             <div class="login-card">
                 <div class="login-header">
@@ -30,30 +30,71 @@
                     <p>Rozliczenia Uber & Bolt</p>
                 </div>
 
-                <div class="role-selector">
-                    <button type="button" id="role-btn-driver" class="role-btn active" onclick="selectRoleTab('driver')">👨‍✈️ Kierowca</button>
-                    <button type="button" id="role-btn-admin" class="role-btn" onclick="selectRoleTab('admin')">⚙️ Admin</button>
+                <div class="auth-tabs">
+                    <button type="button" id="auth-tab-login" class="auth-tab-btn active" onclick="switchAuthMode('login')">Logowanie</button>
+                    <button type="button" id="auth-tab-register" class="auth-tab-btn" onclick="switchAuthMode('register')">Rejestracja</button>
                 </div>
 
-                <!-- <div class="demo-credentials" id="demo-credentials-box">
-                    Konto testowe Kierowcy: <strong>kierowca</strong> / hasło: <strong>123</strong>
-                </div> -->
+                <!-- WIDOK LOGOWANIA -->
+                <div id="auth-box-login">
+                    <div class="role-selector">
+                        <button type="button" id="role-btn-driver" class="role-btn active" onclick="selectRoleTab('driver')">👨‍✈️ Kierowca</button>
+                        <button type="button" id="role-btn-admin" class="role-btn" onclick="selectRoleTab('admin')">⚙️ Admin</button>
+                    </div>
 
-                <form onsubmit="handleLogin(event)">
-                    <div class="input-group">
-                        <label for="login-username">Login / Nazwa użytkownika</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="login-username" placeholder="Wpisz login..." required autocomplete="username">
+                    <form onsubmit="handleLogin(event)">
+                        <div class="input-group">
+                            <label for="login-username">Login / Nazwa użytkownika</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="login-username" placeholder="Wpisz login..." required autocomplete="username">
+                            </div>
                         </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="login-password">Hasło</label>
-                        <div class="input-wrapper">
-                            <input type="password" id="login-password" placeholder="Wpisz hasło..." required autocomplete="current-password">
+                        <div class="input-group">
+                            <label for="login-password">Hasło</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="login-password" placeholder="Wpisz hasło..." required autocomplete="current-password">
+                            </div>
                         </div>
+                        <button type="submit" class="btn-calc" style="margin-top: 24px; margin-bottom: 0;">Zaloguj się</button>
+                    </form>
+                </div>
+
+                <!-- WIDOK REJESTRACJI -->
+                <div id="auth-box-register" style="display: none;">
+                    <div class="role-selector">
+                        <button type="button" id="reg-role-btn-driver" class="role-btn active" onclick="selectRegRoleTab('driver')">👨‍✈️ Kierowca</button>
+                        <button type="button" id="reg-role-btn-admin" class="role-btn" onclick="selectRegRoleTab('admin')">⚙️ Admin</button>
                     </div>
-                    <button type="submit" class="btn-calc" style="margin-top: 24px; margin-bottom: 0;">Zaloguj się</button>
-                </form>
+
+                    <form onsubmit="handleRegister(event)">
+                        <div class="input-group">
+                            <label for="reg-fullname">Imię i Nazwisko</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="reg-fullname" placeholder="np. Jan Kowalski" required autocomplete="name">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="reg-username">Login / Nazwa użytkownika</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="reg-username" placeholder="Utwórz login..." required autocomplete="username">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="reg-password">Hasło</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="reg-password" placeholder="Wpisz min. 3 znaki..." required autocomplete="new-password">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="reg-password-confirm">Powtórz hasło</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="reg-password-confirm" placeholder="Powtórz hasło..." required autocomplete="new-password">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-calc" style="margin-top: 24px; margin-bottom: 0; background: linear-gradient(135deg, var(--accent-bolt), var(--accent-emerald));">Utwórz konto</button>
+                    </form>
+                </div>
+
             </div>
         </div>
 

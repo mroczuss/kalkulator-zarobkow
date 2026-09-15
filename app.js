@@ -103,14 +103,46 @@ function setCurrentUser(user) {
 let activeRoleTab = 'driver';
 function selectRoleTab(role) {
     activeRoleTab = role;
-    document.getElementById("role-btn-driver").classList.toggle("active", role === 'driver');
-    document.getElementById("role-btn-admin").classList.toggle("active", role === 'admin');
+    const btnDriver = document.getElementById("role-btn-driver");
+    const btnAdmin = document.getElementById("role-btn-admin");
+    if (btnDriver) btnDriver.classList.toggle("active", role === 'driver');
+    if (btnAdmin) btnAdmin.classList.toggle("active", role === 'admin');
     
     const demoBox = document.getElementById("demo-credentials-box");
-    if (role === 'driver') {
-        demoBox.innerHTML = 'Konto testowe Kierowcy: <strong>kierowca</strong> / hasło: <strong>123</strong>';
+    if (demoBox) {
+        if (role === 'driver') {
+            demoBox.innerHTML = 'Konto testowe Kierowcy: <strong>kierowca</strong> / hasło: <strong>123</strong>';
+        } else {
+            demoBox.innerHTML = 'Konto testowe Admina: <strong>admin</strong> / hasło: <strong>admin123</strong>';
+        }
+    }
+}
+
+let activeRegRoleTab = 'driver';
+function selectRegRoleTab(role) {
+    activeRegRoleTab = role;
+    const btnDriver = document.getElementById("reg-role-btn-driver");
+    const btnAdmin = document.getElementById("reg-role-btn-admin");
+    if (btnDriver) btnDriver.classList.toggle("active", role === 'driver');
+    if (btnAdmin) btnAdmin.classList.toggle("active", role === 'admin');
+}
+
+function switchAuthMode(mode) {
+    const tabLogin = document.getElementById("auth-tab-login");
+    const tabRegister = document.getElementById("auth-tab-register");
+    const boxLogin = document.getElementById("auth-box-login");
+    const boxRegister = document.getElementById("auth-box-register");
+
+    if (mode === 'login') {
+        if (tabLogin) tabLogin.classList.add("active");
+        if (tabRegister) tabRegister.classList.remove("active");
+        if (boxLogin) boxLogin.style.display = "block";
+        if (boxRegister) boxRegister.style.display = "none";
     } else {
-        demoBox.innerHTML = 'Konto testowe Admina: <strong>admin</strong> / hasło: <strong>admin123</strong>';
+        if (tabRegister) tabRegister.classList.add("active");
+        if (tabLogin) tabLogin.classList.remove("active");
+        if (boxRegister) boxRegister.style.display = "block";
+        if (boxLogin) boxLogin.style.display = "none";
     }
 }
 
@@ -142,6 +174,80 @@ async function handleLogin(e) {
 
     setCurrentUser(found);
     showToast(`Witaj, ${found.name}!`);
+    renderAppLayout();
+}
+
+async function handleRegister(e) {
+    if (e) e.preventDefault();
+    const fullname = document.getElementById("reg-fullname").value.trim();
+    const username = document.getElementById("reg-username").value.trim();
+    const password = document.getElementById("reg-password").value.trim();
+    const passwordConfirm = document.getElementById("reg-password-confirm").value.trim();
+    const role = activeRegRoleTab || 'driver';
+
+    if (!fullname || !username || !password || !passwordConfirm) {
+        showToast("⚠️ Wypełnij wszystkie pola!");
+        return;
+    }
+
+    if (password !== passwordConfirm) {
+        showToast("❌ Hasła nie są identyczne!");
+        return;
+    }
+
+    if (password.length < 3) {
+        showToast("⚠️ Hasło musi mieć co najmniej 3 znaki!");
+        return;
+    }
+
+    // Sprawdzenie czy użytkownik już istnieje
+    let users = [];
+    if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive && db) {
+        try {
+            const snap = await db.collection('users').get();
+            snap.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
+        } catch (err) {
+            console.warn("Błąd pobierania użytkowników z Firebase:", err);
+        }
+    }
+
+    const localUsers = getStoredData(STORAGE_KEYS.USERS, DEFAULT_USERS);
+    localUsers.forEach(u => {
+        if (!users.some(existing => existing.username.toLowerCase() === u.username.toLowerCase())) {
+            users.push(u);
+        }
+    });
+
+    const userExists = users.some(u => u.username.toLowerCase() === username.toLowerCase());
+    if (userExists) {
+        showToast("❌ Ta nazwa użytkownika jest już zajęta!");
+        return;
+    }
+
+    const newUser = {
+        id: 'usr_' + Date.now(),
+        username: username,
+        password: password,
+        name: fullname,
+        role: role
+    };
+
+    // Zapis lokalny
+    const updatedLocalUsers = getStoredData(STORAGE_KEYS.USERS, DEFAULT_USERS);
+    updatedLocalUsers.push(newUser);
+    setStoredData(STORAGE_KEYS.USERS, updatedLocalUsers);
+
+    // Zapis w Firebase Firestore
+    if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive && db) {
+        try {
+            await db.collection('users').doc(newUser.id).set(newUser);
+        } catch (err) {
+            console.warn("Błąd zapisu użytkownika w Firebase Firestore:", err);
+        }
+    }
+
+    setCurrentUser(newUser);
+    showToast(`🎉 Konto utworzone! Witaj, ${newUser.name}!`);
     renderAppLayout();
 }
 

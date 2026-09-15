@@ -100,33 +100,6 @@ function setCurrentUser(user) {
     setStoredData(STORAGE_KEYS.CURRENT_USER, user);
 }
 
-let activeRoleTab = 'driver';
-function selectRoleTab(role) {
-    activeRoleTab = role;
-    const btnDriver = document.getElementById("role-btn-driver");
-    const btnAdmin = document.getElementById("role-btn-admin");
-    if (btnDriver) btnDriver.classList.toggle("active", role === 'driver');
-    if (btnAdmin) btnAdmin.classList.toggle("active", role === 'admin');
-    
-    const demoBox = document.getElementById("demo-credentials-box");
-    if (demoBox) {
-        if (role === 'driver') {
-            demoBox.innerHTML = 'Konto testowe Kierowcy: <strong>kierowca</strong> / hasło: <strong>123</strong>';
-        } else {
-            demoBox.innerHTML = 'Konto testowe Admina: <strong>admin</strong> / hasło: <strong>admin123</strong>';
-        }
-    }
-}
-
-let activeRegRoleTab = 'driver';
-function selectRegRoleTab(role) {
-    activeRegRoleTab = role;
-    const btnDriver = document.getElementById("reg-role-btn-driver");
-    const btnAdmin = document.getElementById("reg-role-btn-admin");
-    if (btnDriver) btnDriver.classList.toggle("active", role === 'driver');
-    if (btnAdmin) btnAdmin.classList.toggle("active", role === 'admin');
-}
-
 function switchAuthMode(mode) {
     const tabLogin = document.getElementById("auth-tab-login");
     const tabRegister = document.getElementById("auth-tab-register");
@@ -183,7 +156,7 @@ async function handleRegister(e) {
     const username = document.getElementById("reg-username").value.trim();
     const password = document.getElementById("reg-password").value.trim();
     const passwordConfirm = document.getElementById("reg-password-confirm").value.trim();
-    const role = activeRegRoleTab || 'driver';
+    const role = 'driver';
 
     if (!fullname || !username || !password || !passwordConfirm) {
         showToast("⚠️ Wypełnij wszystkie pola!");

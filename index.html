@@ -37,11 +37,6 @@
 
                 <!-- WIDOK LOGOWANIA -->
                 <div id="auth-box-login">
-                    <div class="role-selector">
-                        <button type="button" id="role-btn-driver" class="role-btn active" onclick="selectRoleTab('driver')">👨‍✈️ Kierowca</button>
-                        <button type="button" id="role-btn-admin" class="role-btn" onclick="selectRoleTab('admin')">⚙️ Admin</button>
-                    </div>
-
                     <form onsubmit="handleLogin(event)">
                         <div class="input-group">
                             <label for="login-username">Login / Nazwa użytkownika</label>
@@ -61,11 +56,6 @@
 
                 <!-- WIDOK REJESTRACJI -->
                 <div id="auth-box-register" style="display: none;">
-                    <div class="role-selector">
-                        <button type="button" id="reg-role-btn-driver" class="role-btn active" onclick="selectRegRoleTab('driver')">👨‍✈️ Kierowca</button>
-                        <button type="button" id="reg-role-btn-admin" class="role-btn" onclick="selectRegRoleTab('admin')">⚙️ Admin</button>
-                    </div>
-
                     <form onsubmit="handleRegister(event)">
                         <div class="input-group">
                             <label for="reg-fullname">Imię i Nazwisko</label>

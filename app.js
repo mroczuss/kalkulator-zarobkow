@@ -284,7 +284,7 @@ function updateWeekAndYear(str) {
 // KALKULATOR ZAROBKÓW
 let currentCalculation = null;
 
-async function calculateSettlement() {
+async function calculateSettlement(autoSave = true) {
     let config = getStoredData(STORAGE_KEYS.CONFIG, DEFAULT_CONFIG);
     if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive && db) {
         try {
@@ -366,25 +366,31 @@ async function calculateSettlement() {
     }
 
     document.getElementById("results").style.display = "block";
+
+    const shouldSave = autoSave !== false;
+    if (shouldSave) {
+        await saveCurrentSettlement();
+    }
 }
 
 // ZAPISANIE ROZLICZENIA DO HISTORII (LOCALSTORAGE / FIREBASE)
 async function saveCurrentSettlement() {
     if (!currentCalculation) {
-        await calculateSettlement();
+        await calculateSettlement(false);
     }
     
+    const isEditing = Boolean(currentEditingId);
+    const targetId = currentEditingId;
+
     // Zapis w Firebase Firestore jeśli aktywny
     if (typeof isFirebaseActive !== 'undefined' && isFirebaseActive && db) {
         try {
-            if (currentEditingId) {
-                await db.collection('settlements').doc(currentEditingId).set(currentCalculation, { merge: true });
+            if (isEditing) {
+                await db.collection('settlements').doc(targetId).set(currentCalculation, { merge: true });
                 showToast("⚡ Zaktualizowano rozliczenie w chmurze Firebase!");
-                currentEditingId = null;
-                document.getElementById("btn-save-text").innerText = "💾 Zapisz w historii";
             } else {
                 const docRef = await db.collection('settlements').add(currentCalculation);
-                showToast("⚡ Zapisano rozliczenie w chmurze Firebase!");
+                showToast("⚡ Przeliczono i zapisano rozliczenie w chmurze Firebase!");
             }
         } catch (e) {
             console.error("Błąd zapisu w Firebase:", e);
@@ -393,13 +399,11 @@ async function saveCurrentSettlement() {
 
     // Zapis w localStorage jako kopia bezpieczeństwa
     const settlements = getStoredData(STORAGE_KEYS.SETTLEMENTS, []);
-    if (currentEditingId) {
-        const idx = settlements.findIndex(s => s.id === currentEditingId);
+    if (isEditing) {
+        const idx = settlements.findIndex(s => s.id === targetId);
         if (idx !== -1) {
-            settlements[idx] = { ...currentCalculation, id: currentEditingId };
+            settlements[idx] = { ...currentCalculation, id: targetId };
         }
-        currentEditingId = null;
-        document.getElementById("btn-save-text").innerText = "💾 Zapisz w historii";
     } else {
         const newRecord = {
             ...currentCalculation,
@@ -409,8 +413,16 @@ async function saveCurrentSettlement() {
     }
     setStoredData(STORAGE_KEYS.SETTLEMENTS, settlements);
 
-    if (!isFirebaseActive) {
-        showToast("Rozliczenie zostało zapisane w historii!");
+    currentEditingId = null;
+    const btnSaveText = document.getElementById("btn-save-text");
+    if (btnSaveText) btnSaveText.innerText = "💾 Zapisz w historii";
+
+    if (typeof isFirebaseActive === 'undefined' || !isFirebaseActive) {
+        if (isEditing) {
+            showToast("⚡ Rozliczenie zostało zaktualizowane w historii!");
+        } else {
+            showToast("⚡ Rozliczenie zostało przeliczone i automatycznie zapisane w historii!");
+        }
     }
 }
 
@@ -488,10 +500,11 @@ async function editSettlement(id) {
     document.getElementById("boltk").value = found.bolt.kursy;
 
     currentEditingId = id;
-    document.getElementById("btn-save-text").innerText = "🔄 Zaktualizuj rozliczenie";
+    const btnSaveText = document.getElementById("btn-save-text");
+    if (btnSaveText) btnSaveText.innerText = "🔄 Zaktualizuj rozliczenie";
 
     switchTab('calc');
-    await calculateSettlement();
+    await calculateSettlement(false);
     showToast("Wczytano rozliczenie do edycji!");
 }
 
